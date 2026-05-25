@@ -6,7 +6,7 @@ import time
 import string
 
 API = "https://discord.com/api/v9/unique-username/username-attempt-unauthed"
-WEBHOOK = "https://discord.com/api/webhooks/1490243245198807133/zqmeds9xpArPDcLh9VsyST6bSSp7EVOr2OWH9D6Zj-kIhp-qvyyKyT8XHuBa6FrdpRYi"
+WEBHOOK = "https://discord.com/api/webhooks/1508590349713408231/CIljNz9hoywwrkH9ZJ7cjWVwUi5gogPNdGlWXzYucncqQb13qZZpB6D-Vi6wCSaeZ4WT"
 
 THREADS = 1
 COOLDOWN = 10
