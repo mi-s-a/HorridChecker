@@ -10,9 +10,9 @@ API = "https://discord.com/api/v9/unique-username/username-attempt-unauthed"
 WEBHOOK = "https://discord.com/api/webhooks/1508590349713408231/CIljNz9hoywwrkH9ZJ7cjWVwUi5gogPNdGlWXzYucncqQb13qZZpB6D-Vi6wCSaeZ4WT"
 
 # safer settings
-THREADS = 1
-COOLDOWN_MIN = 4
-COOLDOWN_MAX = 10
+THREADS = 5
+COOLDOWN_MIN = 7
+COOLDOWN_MAX = 16
 MAX_RETRIES = 5
 
 CHARS = string.ascii_lowercase + string.digits + "_" + "."
@@ -72,7 +72,10 @@ def send_webhook(name):
         session.post(
             WEBHOOK,
             json={
-                "content": f"🔥 AVAILABLE: `{name}`"
+                "content": f"🔥 AVAILABLE: `{name}` @everyone",
+                "allowed_mentions": {
+                    "parse": ["everyone"]
+                }
             },
             timeout=10
         )
