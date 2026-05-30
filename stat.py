@@ -72,7 +72,7 @@ def send_webhook(name):
         session.post(
             WEBHOOK,
             json={
-                "content": f"🔥 AVAILABLE: `{name}` @everyone",
+                "content": f"available: `{name}` @everyone",
                 "allowed_mentions": {
                     "parse": ["everyone"]
                 }
