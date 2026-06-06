@@ -1,27 +1,27 @@
-name: Username Checker
+name: Discord Username Checker
 
 on:
-  workflow_dispatch:
+  workflow_dispatch:   # Allow manual trigger
   schedule:
-    - cron: "*/2 * * * *"
+    - cron: '*/30 * * * *'   # Adjust as needed
 
 jobs:
-  run-checker:
+  check:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: pip install requests
 
-      - name: Run Checker
+      - name: Run checker
         env:
-          WEBHOOK_URL: ${{ secrets.DISCORD_WEBHOOK }}
-        run: python stat.py
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_WORKFLOW: checker.yml     # Must match your workflow filename
+        run: python fixed_username_checker.py
