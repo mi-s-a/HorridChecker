@@ -8,7 +8,9 @@ WEBHOOK = "https://discord.com/api/webhooks/1508590349713408231/CIljNz9hoywwrkH9
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY")
-GITHUB_WORKFLOW = os.getenv("GITHUB_WORKFLOW")
+
+# HARD CODE THE FILENAME HERE (most reliable)
+GITHUB_WORKFLOW = "checker.yml"   # ←←← This is the important line
 
 session = requests.Session()
 session.headers.update({
@@ -33,7 +35,7 @@ def trigger_new_workflow_run():
         "X-GitHub-Api-Version": "2022-11-28"
     }
 
-    log(f"[GITHUB] Triggering workflow: {GITHUB_WORKFLOW}")
+    log(f"[GITHUB] Triggering workflow file: {GITHUB_WORKFLOW}")
 
     try:
         r = requests.post(url, json={"ref": "main"}, headers=headers, timeout=10)
@@ -69,13 +71,11 @@ def check(name):
                 with open("hits.txt", "a", encoding="utf-8") as f:
                     f.write(name + "\n")
                 log(f"[SAVED] {name}")
-
         elif r.status_code == 429:
             log("[RATE LIMITED] → Triggering new workflow run immediately...")
             trigger_new_workflow_run()
             log("[EXIT] Exiting current run.")
             sys.exit(0)
-
         else:
             log(f"[ERROR] HTTP {r.status_code}")
 
