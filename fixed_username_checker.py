@@ -2,6 +2,7 @@ import requests
 import sys
 import os
 import time
+import string
 from queue import Queue
 
 # ================== CONFIGURATION ==================
