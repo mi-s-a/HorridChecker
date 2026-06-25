@@ -1,38 +1,20 @@
 import requests
 import sys
 import os
-import time
+import random
 import string
 from queue import Queue
 
-# ================== CONFIGURATION ==================
 API = "https://discord.com/api/v9/unique-username/username-attempt-unauthed"
-WEBHOOK = "https://discord.com/api/webhooks/1519504577173651466/6yYRuvHpdlP4-MxFMxWwyNhPA1j6RgUnlYox21o5PECB-_95S4EU2_OqYHPYv_tWKXfP"
+WEBHOOK = "https://discord.com/api/webhooks/1508590349713408231/CIljNz9hoywwrkH9ZJ7cjWVwUi5gogPNdGlWXzYucncqQb13qZZpB6D-Vi6wCSaeZ4WT"
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY")
 GITHUB_WORKFLOW = "checker.yml"
 
-# <<< EDIT YOUR TARGET NAMES HERE >>>
-CHARS = string.ascii_lowercase + string.digits + "._"
-
-def generate_username(length=4):
-    while True:
-        name = ''.join(random.choice(CHARS) for _ in range(length))
-
-        # Prevent invalid usernames
-        if (
-            name.startswith((".", "_")) or
-            name.endswith((".", "_")) or
-            ".." in name or
-            "__" in name
-        ):
-            continue
-
-        return name
-
-CHECK_INTERVAL = 2  # Seconds to wait between full check cycles (recommended: 3-10)
-# ===================================================
+# Random username settings
+USERNAME_LENGTH = 4
+NUM_USERNAMES = 10000
 
 session = requests.Session()
 session.headers.update({
@@ -44,6 +26,7 @@ def log(msg):
     print(msg, flush=True)
 
 def send_webhook(name):
+    """Send available username to Discord webhook"""
     if not WEBHOOK:
         return
     try:
@@ -61,61 +44,76 @@ def send_webhook(name):
 
 def trigger_new_workflow_run():
     if not all([GITHUB_TOKEN, GITHUB_REPOSITORY, GITHUB_WORKFLOW]):
+        log("[GITHUB] Missing environment variables")
         return False
+
     owner, repo = GITHUB_REPOSITORY.split("/")
     url = f"https://api.github.com/repos/{owner}/{repo}/actions/workflows/{GITHUB_WORKFLOW}/dispatches"
+
     headers = {
         "Authorization": f"Bearer {GITHUB_TOKEN}",
         "Accept": "application/vnd.github.v3+json",
         "X-GitHub-Api-Version": "2022-11-28"
     }
+
+    log(f"[GITHUB] Triggering workflow file: {GITHUB_WORKFLOW}")
+
     try:
         r = requests.post(url, json={"ref": "main"}, headers=headers, timeout=10)
         if r.status_code in (200, 204):
             log("[GITHUB] ✅ Successfully triggered new workflow run!")
             return True
+        else:
+            log(f"[GITHUB] Failed: {r.status_code} {r.text}")
+            return False
     except Exception as e:
         log(f"[GITHUB] Error: {e}")
-    return False
+        return False
 
-log("[INIT] Fixed username checker started")
-log(f"[TARGETS] Monitoring {len(name)} username(s): {name}")
+log("[INIT] Random 4-char username checker started")
+
+# Character set: lowercase letters + digits + underscore + period
+chars = string.digits + string.ascii_lowercase + "_" + "."
+
+names_queue = Queue()
+for _ in range(NUM_USERNAMES):
+    username = ''.join(random.choice(chars) for _ in range(USERNAME_LENGTH))
+    names_queue.put(username)
+
+log(f"[GENERATED] {NUM_USERNAMES} random usernames")
 
 def check(name):
     try:
         log(f"[CHECKING] {name}")
         r = session.post(API, json={"username": name}, timeout=15)
-        
+        log(f"[RESPONSE] {name} -> {r.status_code}")
+
         if r.status_code == 200:
             data = r.json()
             if not data.get("taken", True):
-                log(f"[OPEN] ✅ {name} IS AVAILABLE!")
+                log(f"[OPEN] {name} → Sending to webhook")
                 send_webhook(name)
+                # Optional: still save to file
                 with open("hits.txt", "a", encoding="utf-8") as f:
                     f.write(name + "\n")
-                return True  # Found available
             else:
                 log(f"[TAKEN] {name}")
+
         elif r.status_code == 429:
-            log("[RATE LIMITED] → Triggering new workflow run...")
+            log("[RATE LIMITED] → Triggering new workflow run immediately...")
             trigger_new_workflow_run()
             log("[EXIT] Exiting current run.")
             sys.exit(0)
+
         else:
             log(f"[ERROR] HTTP {r.status_code}")
+
     except Exception as e:
         log(f"[ERROR] {e}")
-    return False
 
-# Main loop - checks your names repeatedly
-cycle = 0
-while True:
-    cycle += 1
-    log(f"\n[ CYCLE {cycle} ] Starting check round...")
-    
-    name = generate_username()
+# Run checker
+while not names_queue.empty():
+    name = names_queue.get()
     check(name)
-    time.sleep(1)  # Small delay between individual checks
-    
-    log(f"[CYCLE {cycle}] Completed. Waiting {CHECK_INTERVAL} seconds...")
-    time.sleep(CHECK_INTERVAL)
+
+log("[DONE]")
