@@ -6,18 +6,29 @@ from queue import Queue
 
 # ================== CONFIGURATION ==================
 API = "https://discord.com/api/v9/unique-username/username-attempt-unauthed"
-WEBHOOK = "https://discord.com/api/webhooks/1508590349713408231/CIljNz9hoywwrkH9ZJ7cjWVwUi5gogPNdGlWXzYucncqQb13qZZpB6D-Vi6wCSaeZ4WT"
+WEBHOOK = "https://discord.com/api/webhooks/1519504577173651466/6yYRuvHpdlP4-MxFMxWwyNhPA1j6RgUnlYox21o5PECB-_95S4EU2_OqYHPYv_tWKXfP"
 
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 GITHUB_REPOSITORY = os.getenv("GITHUB_REPOSITORY")
 GITHUB_WORKFLOW = "checker.yml"
 
 # <<< EDIT YOUR TARGET NAMES HERE >>>
-TARGET_USERNAMES = [
-    "encraty",      # ← Change this
-    "recondense",      # Add more if you want
-    # "name3", "name4", etc.
-]
+CHARS = string.ascii_lowercase + string.digits + "._"
+
+def generate_username(length=4):
+    while True:
+        name = ''.join(random.choice(CHARS) for _ in range(length))
+
+        # Prevent invalid usernames
+        if (
+            name.startswith((".", "_")) or
+            name.endswith((".", "_")) or
+            ".." in name or
+            "__" in name
+        ):
+            continue
+
+        return name
 
 CHECK_INTERVAL = 2  # Seconds to wait between full check cycles (recommended: 3-10)
 # ===================================================
@@ -101,9 +112,9 @@ while True:
     cycle += 1
     log(f"\n[ CYCLE {cycle} ] Starting check round...")
     
-    for name in TARGET_USERNAMES:
-        check(name)
-        time.sleep(1)  # Small delay between individual checks
+    name = generate_username()
+    check(name)
+    time.sleep(1)  # Small delay between individual checks
     
     log(f"[CYCLE {cycle}] Completed. Waiting {CHECK_INTERVAL} seconds...")
     time.sleep(CHECK_INTERVAL)
